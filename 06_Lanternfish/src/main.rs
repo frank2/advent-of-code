@@ -1,5 +1,4 @@
 use std::io;
-use std::collections::HashMap;
 
 fn simulate(fish: &Vec<u8>, steps: u16) -> u64 {
     let mut breedable = [0u64; 7];
