@@ -9,7 +9,7 @@ enum Cave {
     Small(String),
 }
 impl Cave {
-    fn from_string(s: &str) -> Self {
+    fn from_str(s: &str) -> Self {
         match s {
             "start" => Self::Start,
             "end" => Self::End,
@@ -59,7 +59,7 @@ impl Frame {
         self.visits.insert(cave.clone(), visit_count);
 
         match cave {
-            Cave::Small(_) => { if visit_count >= 2 { self.small_threshhold -= 1; } },
+            Cave::Small(_) => { if visit_count >= 2 { self.small_threshhold = 1; } },
             _ => (),
         }
     }
@@ -90,7 +90,7 @@ struct CaveSystem {
 impl CaveSystem {
     fn new() -> Self { Self { nodes: HashMap::<Cave, HashSet<Cave>>::new() } }
     fn import_edge(&mut self, s: &str) {
-        let caves: Vec<Cave> = s.split("-").map(|x| Cave::from_string(x)).collect();
+        let caves: Vec<Cave> = s.split("-").map(|x| Cave::from_str(x)).collect();
 
         self.add_edge(&caves[0], &caves[1]);
         self.add_edge(&caves[1], &caves[0]);
@@ -115,35 +115,22 @@ impl CaveSystem {
             let node = frame.node.clone();
             
             match node {
-                Cave::Start => {
-                    frame.visit(&node);
-                    
-                    self.get_edges(&node).iter()
-                        .for_each(|x| frames.push(Frame::new(x, small_threshhold, Some(&frame))));
-                },
                 Cave::End => {
                     // println!("found path: {:?}", frame.path);
-                    frame.visit(&node);
-                    
                     paths += 1;
-                },
-                Cave::Big(_) => {
-                    frame.visit(&node);
-                    
-                    self.get_edges(&node).iter()
-                        .filter(|&x| !frame.visited(&x))
-                        .for_each(|x| frames.push(Frame::new(x, small_threshhold, Some(&frame))));
+                    continue;
                 },
                 Cave::Small(_) => {
                     if frame.visited(&node) { continue; }
-
-                    frame.visit(&node);
-                    
-                    self.get_edges(&node).iter()
-                        .filter(|&x| !frame.visited(&x))
-                        .for_each(|x| frames.push(Frame::new(x, small_threshhold, Some(&frame))));
-                },                    
+                },
+                _ => (),
             }
+
+            frame.visit(&node);
+                        
+            self.get_edges(&node).iter()
+                .filter(|&x| !frame.visited(&x))
+                .for_each(|x| frames.push(Frame::new(x, small_threshhold, Some(&frame))));
         }
 
         paths
