@@ -1,0 +1,16 @@
+* sections
+** section 1: we can't affect x in any significant way here, so this always pushes
+** section 2: same story here, this always pushes
+** section 3: same story here, this always pushes
+** section 4: we can get this one to refuse to push by making in3 anywhere between 9 and 8, then making in4 2 and 1 respectively
+** section 5: can't affect x, always pushes
+** section 6: can't affect x, always pushes
+** section 7: can't affect x, always pushes
+** section 8: we can get this one to refuse to push by making in7 9, 8, 7, or 6 and in8 4, 3, 2, or 1 respectively
+** section 9: can't affect x, always pushes
+** section 10: we can get this one to refuse to push by making in9 2 or 1 and in10 9 or 8 respectively
+** section 11: we can get this one to refuse to push by setting in6 9, 8, or 7 and in11 3, 2, or 1 respectively
+** section 12: we can get this one to refuse to push by setting in5 and in12 equal (e.g., 1 or 9)
+** section 13: we can get this one to refuse to push by setting in2 to 6, 5, 4, 3, 2, or 1 and in13 to 9, 8, 7, 6, 5, or 4 respectively
+** section 14: we can get this one to refuse to push by setting in1 to 9, 8, 7, 6, 5, or 4 and in14 to 6, 5, 4, 3, 2, or 1 respectively 
+
