@@ -235,8 +235,161 @@ impl Block {
         println!("");
          */
     }
+    fn is_peek_block(&self) -> bool {
+        self.instructions.iter()
+            .filter(|&x| *x == Instruction {
+                opcode: Opcode::Div,
+                operands: vec![Operand::Register(Register::Z), Operand::Constant(1)],
+            })
+            .count() == 1
+    }
+    fn is_pop_block(&self) -> bool {
+        self.instructions.iter()
+            .filter(|&x| *x == Instruction {
+                opcode: Opcode::Div,
+                operands: vec![Operand::Register(Register::Z), Operand::Constant(26)],
+            })
+            .count() == 1
+    }
+    fn get_input_offset(&self) -> Option<isize> {
+        if !self.is_peek_block() { return None; }
+        
+        let mut instructions = self.instructions.clone();
+        instructions.reverse();
+
+        let mut index = 0;
+
+        for i in 0..instructions.len() {
+            index = i;
+
+            let instruction = &instructions[i];
+            let target = Instruction {
+                opcode: Opcode::Add,
+                operands: vec![Operand::Register(Register::Y), Operand::Register(Register::W)]
+            };
+
+            if *instruction == target {
+                break;
+            }
+        }
+
+        let target = &instructions[index-1];
+
+        if let Operand::Constant(offset) = target.operands[1] {
+            Some(offset)
+        }
+        else {
+            None
+        }
+    }
+    fn get_x_offset(&self) -> Option<isize> {
+        if !self.is_pop_block() { return None; }
+        
+        let mut index = 0;
+
+        for i in 0..self.instructions.len() {
+            index = i;
+
+            let instruction = &self.instructions[i];
+            let target = Instruction {
+                opcode: Opcode::Div,
+                operands: vec![Operand::Register(Register::Z), Operand::Constant(26)],
+            };
+            
+            if *instruction == target {
+                break;
+            }
+        }
+
+        let target = &self.instructions[index+1];
+
+        if let Operand::Constant(offset) = target.operands[1] {
+            Some(offset)
+        }
+        else {
+            None
+        }
+    }
 }
 
+#[derive(Clone, Eq, PartialEq, Debug)]
+struct Keygen {
+    serial: HashMap<usize, (isize, isize)>,
+    links: HashMap<usize, usize>,
+}
+impl Keygen {
+    fn generate(blocks: &Vec<Block>) -> Self {
+        let mut serial = HashMap::<usize, (isize, isize)>::new();
+        let mut links = HashMap::<usize, usize>::new();
+        let mut offset_stack = Vec::<(usize, isize)>::new();
+
+        for block_id in 0..blocks.len() {
+            /* if peek block:
+             *     push the serial number id and offset onto the stack
+             * else: // pop block
+             *     pop the id and offset
+             *     get the x delta and add it to the offset
+             *     get the range of values which equal 1 thru 9 when added to that delta
+             *     mark the left-hand id as solved with the left-hand range
+             *     mark the right-hand id as solved with the right-hand range
+             *     mark left and right ids as linked
+             */
+
+            let block = &blocks[block_id];
+            
+            if block.is_peek_block() {
+                let input_offset = block.get_input_offset().unwrap();
+                offset_stack.push((block_id, input_offset));
+                continue;
+            }
+
+            let (popped_id, popped_offset) = offset_stack.pop().unwrap();
+            let x_offset = block.get_x_offset().unwrap();
+            let offset_result = popped_offset + x_offset;
+            let (mut low_end_left, mut low_end_right) = (isize::MAX, isize::MAX);
+            let (mut high_end_left, mut high_end_right) = (isize::MIN, isize::MIN);
+
+            for i in 1..=9 {
+                let value = i+offset_result;
+
+                if value < 1 || value > 9 { continue; }
+
+                if i < low_end_left { low_end_left = i; }
+                if i > high_end_left { high_end_left = i; }
+
+                if value < low_end_right { low_end_right = value; }
+                if value > high_end_right { high_end_right = value; }
+            }
+
+            serial.insert(popped_id, (low_end_left, high_end_left));
+            serial.insert(block_id, (low_end_right, high_end_right));
+            
+            links.insert(popped_id, block_id);
+            links.insert(block_id, popped_id);
+        }
+
+        Self { serial, links }
+    }
+    fn get_lower_serial(&self) -> Vec<isize> {
+        let mut result = vec![0isize; 14];
+
+        for (index, range) in &self.serial {
+            result[*index] = range.0;
+        }
+
+        result
+    }
+    fn get_upper_serial(&self) -> Vec<isize> {
+        let mut result = vec![0isize; 14];
+
+        for (index, range) in &self.serial {
+            result[*index] = range.1;
+        }
+
+        result
+    }
+}
+ 
 fn read_instructions() -> Result<Vec<Block>, ()> {
     let mut buffer = String::new();
     let stdin = io::stdin();
@@ -264,7 +417,8 @@ fn read_instructions() -> Result<Vec<Block>, ()> {
 
 fn part1() {
     if let Ok(blocks) = read_instructions() {
-        let mut state = State::new(&vec![9,6,9,2,9,9,9,4,2,9,3,9,9,6]);
+        let keygen = Keygen::generate(&blocks);
+        let mut state = State::new(&keygen.get_upper_serial());
 
         for block in &blocks {
             block.execute(&mut state);
@@ -277,7 +431,8 @@ fn part1() {
 
 fn part2() {
     if let Ok(blocks) = read_instructions() {
-        let mut state = State::new(&vec![4,1,8,1,1,7,6,1,1,8,1,1,4,1]);
+        let keygen = Keygen::generate(&blocks);
+        let mut state = State::new(&keygen.get_lower_serial());
 
         for block in &blocks {
             block.execute(&mut state);
