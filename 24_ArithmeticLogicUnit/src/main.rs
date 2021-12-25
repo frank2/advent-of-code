@@ -419,6 +419,8 @@ fn part1() {
     if let Ok(blocks) = read_instructions() {
         let keygen = Keygen::generate(&blocks);
         let mut state = State::new(&keygen.get_upper_serial());
+        keygen.get_upper_serial().iter().for_each(|x| print!("{}", x));
+        println!("");
 
         for block in &blocks {
             block.execute(&mut state);
@@ -433,6 +435,8 @@ fn part2() {
     if let Ok(blocks) = read_instructions() {
         let keygen = Keygen::generate(&blocks);
         let mut state = State::new(&keygen.get_lower_serial());
+        keygen.get_lower_serial().iter().for_each(|x| print!("{}", x));
+        println!("");
 
         for block in &blocks {
             block.execute(&mut state);
