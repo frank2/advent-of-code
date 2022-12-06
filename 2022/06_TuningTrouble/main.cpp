@@ -6,7 +6,7 @@
 
 std::optional<std::string::iterator> find_marker(std::string &str, std::size_t size)
 {
-   if (str.size() < size) { return str.end(); }
+   if (str.size() < size) { return std::nullopt; }
 
    auto start = str.begin();
    auto end = std::next(start, size);
