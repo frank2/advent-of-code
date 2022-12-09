@@ -94,32 +94,20 @@ std::size_t scenic_score(const Forest &forest, const Visibility &visibility)
             {
                std::intptr_t x_index, y_index;
                
-               switch (direction)
+               if (direction == Direction::LEFT || direction == Direction::RIGHT)
                {
-               case Direction::LEFT:
-               case Direction::RIGHT:
                   x_index = x+offset; y_index = y;
-                  break;
-
-               case Direction::TOP:
-               case Direction::BOTTOM:
-                  x_index = x; y_index = y+offset;
-                  break;
                }
-
-               switch (direction)
+               else if (direction == Direction::TOP || direction == Direction::BOTTOM)
                {
-               case Direction::LEFT:
-               case Direction::TOP:
-                  --offset;
-                  break;
-
-               case Direction::RIGHT:
-               case Direction::BOTTOM:
-                  ++offset;
-                  break;
+                  x_index = x; y_index = y+offset;
                }
-
+               
+               if (direction == Direction::LEFT || direction == Direction::TOP)
+                  --offset;
+               else if (direction == Direction::RIGHT || direction == Direction::BOTTOM)
+                  ++offset;
+               
                ++visible;
                
                if (forest[y_index][x_index] >= tree)
